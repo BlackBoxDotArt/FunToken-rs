@@ -1,0 +1,1 @@
+# FunToken-rs
