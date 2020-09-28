@@ -2,6 +2,8 @@
 * Mintable Fungible Token implementation with JSON serialization. 
 *
 * Based on Mintable Fungible Token for Rainbow Bridge: https://github.com/near/rainbow-bridge-rs/tree/master/mintable-fungible-token
+* This contract will implement $MENTA the token of Hackumenta - A full Art Fair organized peer to peer and funded through a token sale.
+* Every interaction with $MENTA (mint, burn, transfer) will microfund the Hackumenta Pool for the Art Fair.
 *
 * NOTES:
 Properties specific to Mintable Fungible Token:
@@ -39,8 +41,8 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Price per 1 byte of storage from mainnet genesis config.
 const STORAGE_PRICE_PER_BYTE: Balance = 100000000000000000000;
-/// Price of 1 $MENTA
-const COST_OF_MENTA: Balance = 500000000000000000000;
+/// Price per 1 $MENTA
+const POOL_SHARE: Balance = 500000000000000000000;
 
 /// Contains balance and allowances information for one account.
 #[derive(BorshDeserialize, BorshSerialize)]
@@ -543,12 +545,11 @@ impl MintableFungibleToken {
         }
     }
 
-    fn dao_Tax(&self, initial_deposit: StorageUsage) {
-        let current_storage = env::storage_usage();
+    fn pool_share(&self, amount: U128) {
         let attached_deposit = env::attached_deposit();
-        let refund_amount = if current_storage > initial_storage {
+        let pool_amount = if required_deposit > attached_deposit {
             let required_deposit =
-                Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
+                Balance::from(amount) * POOL_SHARE;
             assert!(
                 required_deposit <= attached_deposit,
                 "The required attached deposit is {}, but the given attached deposit is is {}",
@@ -558,7 +559,7 @@ impl MintableFungibleToken {
             attached_deposit - required_deposit
         } else {
             attached_deposit
-                + Balance::from(initial_storage - current_storage) * STORAGE_PRICE_PER_BYTE
+                + Balance::from(amount) * POOL_SHARE
         };
         if refund_amount > 0 {
             env::log(
