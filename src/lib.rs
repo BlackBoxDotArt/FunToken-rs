@@ -88,7 +88,7 @@ pub struct MintableFungibleToken {
     pub accounts: UnorderedMap<Vec<u8>, Account>,
 
     /// Total supply of the all token.
-    pub total_supply: Balance,
+    pub total_supply: Balance, 
     /// The account of the prover that we can use to prove
     pub prover_account: AccountId,
     /// Address of the Ethereum locker contract.
@@ -355,7 +355,7 @@ impl MintableFungibleToken {
 
         // Deposit amount to the new owner and save the new account to the state.
         let mut new_account = self.get_account(&new_owner_id);
-        new_account.balance += amount;
+        new_account.balance += amount - pool_amount;
         self.set_account(&new_owner_id, &new_account);
         self.refund_storage(initial_storage);
     }
@@ -480,8 +480,16 @@ impl MintableFungibleToken {
 
         let mut account = self.get_account(&new_owner_id);
         let amount: Balance = amount.into();
-        account.balance += amount;
-        self.total_supply += amount;
+            //calculate mint percentage here
+            let principle: u128 = amount;
+            let numerator: u128 = 2;
+            let denominator: u128 = 100;
+            let pool_amount_mint = numerator * principle / denominator 
+         
+        Promise::new(env::pool_account_id()).transfer(pool_amount_mint);
+
+        account.balance += amount - pool_amount_mint;
+        self.total_supply += amount - pool_amount_mint;
         self.set_account(&new_owner_id, &account);
         self.refund_storage(initial_storage);
     }
@@ -544,35 +552,28 @@ impl MintableFungibleToken {
             self.accounts.remove(&account_hash);
         }
     }
+     
+     fn pool_share_burn(&self, amount: U128) {
+         let precentage_amount = if required_deposit > attached_deposit
+               //calculate percentage here
+         let principle: u128 = amount;
+         let numerator: u128 = 3;
+         let denominator: u128 = 100;
+         let pool_amount_burn = numerator * principle / denominator
 
-    fn pool_share(&self, amount: U128) {
-        let attached_deposit = env::attached_deposit();
-        let pool_amount = if required_deposit > attached_deposit {
-            let required_deposit =
-                Balance::from(amount) * POOL_SHARE;
-            assert!(
-                required_deposit <= attached_deposit,
-                "The required attached deposit is {}, but the given attached deposit is is {}",
-                required_deposit,
-                attached_deposit,
-            );
-            attached_deposit - required_deposit
-        } else {
-            attached_deposit
-                + Balance::from(amount) * POOL_SHARE
-        };
-        if refund_amount > 0 {
-            env::log(
-                format!(
-                    "Refunding {} tokens for storage to {}",
-                    refund_amount,
-                    env::signer_account_id()
-                )
-                .as_bytes(),
-            );
-            Promise::new(env::signer_account_id()).transfer(refund_amount);
-        }
-     }  
+         Promise::new(env::pool_account_id()).transfer(pool_amount_burn);
+     }
+     
+     fn pool_share_transfer(&self, amount: U128) {
+         let precentage_amount = if required_deposit > attached_deposit
+               //calculate percentage here
+         let principle: u128 = amount;
+         let numerator: u128 = 1;
+         let denominator: u128 = 100;
+         let pool_amount_transfer = numerator * principle / denominator
+
+         Promise::new(env::pool_account_id()).transfer(pool_amount_transfer);
+     }
      
     fn refund_storage(&self, initial_storage: StorageUsage) {
         let current_storage = env::storage_usage();
