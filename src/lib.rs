@@ -484,13 +484,12 @@ impl MintableFungibleToken {
             let principle: u128 = amount;
             let numerator: u128 = 2;
             let denominator: u128 = 100;
-            let pool_amount_mint = numerator * principle / denominator 
-         
-        Promise::new(env::pool_account_id()).transfer(pool_amount_mint);
+            let pool_amount_mint = numerator * principle / denominator;
 
         account.balance += amount - pool_amount_mint;
         self.total_supply += amount - pool_amount_mint;
         self.set_account(&new_owner_id, &account);
+        self.pay_pool_mint(); 
         self.refund_storage(initial_storage);
     }
 
@@ -553,18 +552,29 @@ impl MintableFungibleToken {
         }
     }
      
-     fn pool_share_burn(&self, amount: U128) {
+     fn pay_pool_mint(&self, pool_amount_mint) {
+         let precentage_amount = if required_deposit > attached_deposit
+               //calculate percentage here
+         let principle: u128 = amount;
+         let numerator: u128 = 2;
+         let denominator: u128 = 100;
+         let pool_amount_burn = numerator * principle / denominator;
+          
+         Promise::new(env::pool_account_id()).transfer(pool_amount_mint);
+     }
+     
+     fn pay_pool_burn(&self, amount: U128) {
          let precentage_amount = if required_deposit > attached_deposit
                //calculate percentage here
          let principle: u128 = amount;
          let numerator: u128 = 3;
          let denominator: u128 = 100;
-         let pool_amount_burn = numerator * principle / denominator
+         let pool_amount_burn = numerator * principle / denominator;
 
          Promise::new(env::pool_account_id()).transfer(pool_amount_burn);
      }
      
-     fn pool_share_transfer(&self, amount: U128) {
+     fn pay_pool_transfer(&self, amount: U128) {
          let precentage_amount = if required_deposit > attached_deposit
                //calculate percentage here
          let principle: u128 = amount;
