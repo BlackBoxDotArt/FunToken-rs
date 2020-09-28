@@ -17,7 +17,7 @@ Properties inherited from the standard Fungible Token:
 *    abuse of deep tries. Shouldn't be an issue, once NEAR clients implement full hashing of keys.
 *  - The contract tracks the change in storage before and after the call. If the storage increases,
 *    the contract requires the caller of the contract to attach enough deposit to the function call
-*    to cover the storage cost.
+*    to cover the storage cost. + extended for Buy-In
 *    This is done to prevent a denial of service attack on the contract by taking all available storage.
 *    If the storage decreases, the contract will issue a refund for the cost of the released storage.
 *    The unused tokens from the attached deposit are also refunded, so it's safe to
@@ -39,6 +39,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Price per 1 byte of storage from mainnet genesis config.
 const STORAGE_PRICE_PER_BYTE: Balance = 100000000000000000000;
+/// Price of 1 $MENTA
 const COST_OF_MENTA: Balance = 500000000000000000000;
 
 /// Contains balance and allowances information for one account.
@@ -311,7 +312,7 @@ impl MintableFungibleToken {
     /// * If this function is called by an escrow account (`owner_id != predecessor_account_id`),
     ///   then the allowance of the caller of the function (`predecessor_account_id`) on
     ///   the account of `owner_id` should be greater or equal than the transfer `amount`.
-    /// * Caller of the method has to attach deposit enough to cover storage difference at the
+    /// * Caller of the method has to attach deposit enough to cover storage difference plus tax at the
     ///   fixed storage price defined in the contract.
     #[payable]
     pub fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, amount: U128) {
@@ -362,7 +363,7 @@ impl MintableFungibleToken {
     /// Act the same was as `transfer_from` with `owner_id` equal to the caller of the contract
     /// (`predecessor_id`).
     /// Requirements:
-    /// * Caller of the method has to attach deposit enough to cover storage difference at the
+    /// * Caller of the method has to attach deposit enough to cover storage difference plus rax at the
     ///   fixed storage price defined in the contract.
     #[payable]
     pub fn transfer(&mut self, new_owner_id: AccountId, amount: U128) {
@@ -405,7 +406,7 @@ impl MintableFungibleToken {
         let current_storage = env::storage_usage();
         let attached_deposit = env::attached_deposit();
         let required_deposit =
-            Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
+            Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE + COST_OF_MENTA;
         let leftover_deposit = attached_deposit - required_deposit;
         let Proof {
             log_index,
@@ -542,6 +543,36 @@ impl MintableFungibleToken {
         }
     }
 
+    fn dao_Tax(&self, initial_deposit: StorageUsage) {
+        let current_storage = env::storage_usage();
+        let attached_deposit = env::attached_deposit();
+        let refund_amount = if current_storage > initial_storage {
+            let required_deposit =
+                Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
+            assert!(
+                required_deposit <= attached_deposit,
+                "The required attached deposit is {}, but the given attached deposit is is {}",
+                required_deposit,
+                attached_deposit,
+            );
+            attached_deposit - required_deposit
+        } else {
+            attached_deposit
+                + Balance::from(initial_storage - current_storage) * STORAGE_PRICE_PER_BYTE
+        };
+        if refund_amount > 0 {
+            env::log(
+                format!(
+                    "Refunding {} tokens for storage to {}",
+                    refund_amount,
+                    env::signer_account_id()
+                )
+                .as_bytes(),
+            );
+            Promise::new(env::signer_account_id()).transfer(refund_amount);
+        }
+     }  
+     
     fn refund_storage(&self, initial_storage: StorageUsage) {
         let current_storage = env::storage_usage();
         let attached_deposit = env::attached_deposit();
