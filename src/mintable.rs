@@ -1,5 +1,8 @@
 /**
-* Mintable Fungible Token implementation with JSON serialization.
+* Mintable Fungible Token implementation with JSON serialization. 
+*
+* Based on Mintable Fungible Token for Rainbow Bridge: https://github.com/near/rainbow-bridge-rs/tree/master/mintable-fungible-token
+*
 * NOTES:
 Properties specific to Mintable Fungible Token:
 *  - It is an extension of the standard Fungible token that can be found here: https://github.com/near/near-sdk-rs/tree/master/examples/fungible-token
@@ -36,6 +39,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Price per 1 byte of storage from mainnet genesis config.
 const STORAGE_PRICE_PER_BYTE: Balance = 100000000000000000000;
+const COST_OF_MENTA: Balance = 500000000000000000000;
 
 /// Contains balance and allowances information for one account.
 #[derive(BorshDeserialize, BorshSerialize)]
