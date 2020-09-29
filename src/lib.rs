@@ -37,7 +37,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{UnorderedMap, UnorderedSet};
 use near_sdk::json_types::U128;
 use near_sdk::{
-    env, ext_contract, near_bindgen, AccountId, Balance, Math, Promise, PromiseOrValue, StorageUsage,
+    env, ext_contract, near_bindgen, AccountId, Balance, Promise, PromiseOrValue, StorageUsage,
 };
 #[cfg(test)]
 use serde::Deserialize;
@@ -345,8 +345,11 @@ impl MintableFungibleToken {
             env::panic(b"Not enough balance");
         }
         
-        //calculate pool share 
-        let pool_amount_transfer = self.pool_transfer(amount);  
+         //calculate percentage here
+         let principle: u128 = amount;
+         let numerator: u128 = 1;
+         let denominator: u128 = 100;
+         let pool_amount_transfer = numerator * principle / denominator;  
          
         account.balance -= amount - pool_amount_transfer;
 
@@ -419,7 +422,7 @@ impl MintableFungibleToken {
         let current_storage = env::storage_usage();
         let attached_deposit = env::attached_deposit();
         let required_deposit =
-            Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE + COST_OF_MENTA;
+            Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
         let leftover_deposit = attached_deposit - required_deposit;
         let Proof {
             log_index,
@@ -492,8 +495,11 @@ impl MintableFungibleToken {
         let mut account = self.get_account(&new_owner_id);
         let amount: Balance = amount.into();
         
-        //calculate pool share 
-        let pool_amount_mint = self.pool_mint(amount); 
+         //calculate percentage here
+         let principle: u128 = amount;
+         let numerator: u128 = 2;
+         let denominator: u128 = 100;
+         let pool_amount_mint = numerator * principle / denominator; 
 
         account.balance += amount - pool_amount_mint;
         self.total_supply += amount - pool_amount_mint;
@@ -511,8 +517,12 @@ impl MintableFungibleToken {
         let mut account = self.get_account(&owner);
         assert!(account.balance >= amount.0, "Not enough balance");
          
-        //calculate pool share 
-        let pool_amount_burn = self.pool_burn(amount); 
+         //calculate percentage here
+         let principle: u128 = amount;
+         let numerator: u128 = 3;
+         let denominator: u128 = 100;
+         let pool_amount_burn = numerator * principle / denominator;
+         
         account.balance -= amount.0 - pool_burn_amount;
         self.total_supply -= amount.0 - pool_burn_amount;
         self.pay_pool_burn(pool_burn_amount); 
@@ -565,31 +575,7 @@ impl MintableFungibleToken {
         }
     }
      
-     fn pool_mint(&self, amount: U128) {
-         //calculate percentage here
-         let principle: u128 = amount;
-         let numerator: u128 = 2;
-         let denominator: u128 = 100;
-         let pool_amount_mint = numerator * principle / denominator;
-     }
-     
-     fn pool_burn(&self, amount: U128) {
-         //calculate percentage here
-         let principle: u128 = amount;
-         let numerator: u128 = 3;
-         let denominator: u128 = 100;
-         let pool_amount_burn = numerator * principle / denominator;
-     }
-     
-     fn pool_transfer(&self, amount: U128) {
-         //calculate percentage here
-         let principle: u128 = amount;
-         let numerator: u128 = 1;
-         let denominator: u128 = 100;
-         let pool_amount_transfer = numerator * principle / denominator
-     }
-     
-     fn pay_pool_mint(&self, pool_amount_mint) {
+     fn pay_pool_mint(&self, pool_amount_mint: U128) {
           
          Promise::new(env::pool_account_id()).transfer(pool_amount_mint);
      }
