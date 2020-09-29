@@ -50,6 +50,8 @@ const STORAGE_PRICE_PER_BYTE: Balance = 100000000000000000000;
 /// Price per 1 $MENTA
 const POOL_SHARE: Balance = 500000000000000000000;
 
+let pool_account_id = hackumenta.testnet;
+
 /// Contains balance and allowances information for one account.
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Account {
@@ -575,19 +577,19 @@ impl MintableFungibleToken {
         }
     }
      
-     fn pay_pool_mint(&self, pool_amount_mint: U128) {
+     fn pay_pool_mint(pool_account_id: AccountId, pool_amount_mint: U128) {
           
-         Promise::new(env::pool_account_id()).transfer(pool_amount_mint);
+         Promise::new(pool_account_id).transfer(pool_amount_mint);
      }
      
-     fn pay_pool_burn(&self, pool_amount_burn: U128) {
+     fn pay_pool_burn(pool_account_id: AccountId, pool_amount_burn: U128) {
 
-         Promise::new(env::pool_account_id()).transfer(pool_amount_burn);
+         Promise::new(pool_account_id).transfer(pool_amount_burn);
      }
      
-     fn pay_pool_transfer(&self, pool_amount_transfer: U128) {
+     fn pay_pool_transfer(pool_account_id: AccountId, pool_amount_transfer: U128) {
 
-         Promise::new(env::pool_account_id()).transfer(pool_amount_transfer);
+         Promise::new(pool_account_id).transfer(pool_amount_transfer);
      }
 
     fn refund_storage(&self, initial_storage: StorageUsage) {
