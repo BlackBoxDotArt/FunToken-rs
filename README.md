@@ -2,7 +2,7 @@
 
 Based on Mintable Fungible Token for Rainbow Bridge: https://github.com/near/rainbow-bridge-rs/tree/master/mintable-fungible-token
 
-This contract will implement $NMT (Near $MENTA) the token of Hackumenta - A full Art Fair organized peer to peer and funded through a token sale.
+This contract implementa $NMT (Near $MENTA) the token of Hackumenta - A full Art Fair organized peer to peer and funded through a token sale.
 
 Every interaction with $MENTA (mint, burn, transfer) will microfund the Hackumenta Pool for the Art Fair. 
 
