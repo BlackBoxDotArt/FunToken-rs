@@ -49,8 +49,9 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 const STORAGE_PRICE_PER_BYTE: Balance = 100000000000000000000;
 /// Price per 1 $MENTA
 const POOL_SHARE: Balance = 500000000000000000000;
+/// Hackumenta Pool Account
+const pool_account_id = hackumenta.testnet;
 
-let pool_account_id = hackumenta.testnet;
 
 /// Contains balance and allowances information for one account.
 #[derive(BorshDeserialize, BorshSerialize)]
