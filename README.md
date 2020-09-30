@@ -29,8 +29,6 @@ This Fungible Token is the foundation stone upon which real life art experiences
 
 # Tokenomic design
 
-![individual-mint-burn-trojan-simulation](https://github.com/TROJANFOUNDATION/Trojan-DAO-Monetary-System/blob/master/cadCAD_simulation/mint-burn-graph.png)
-
 $MENTA effectively creates a web3 crowdfunding mechanism, that would lend itself to several use cases for collective value creation.
 
 $MENTA will be a “social token”, an NEP21 fungible token minted on NEAR, that will be used as a unit of exchange within the HACKUMENTA ecosystem, for the public, participating artists, visitors and collectors.
@@ -139,7 +137,7 @@ DAO implementation on NEAR: Our tokenomic system on Ethereum also contains contr
 
 
 
-* NOTES:
+# NOTES:
 
 
 Properties specific to Mintable Fungible Token:
