@@ -1,5 +1,7 @@
 # HACKUMENTA token ($MENTA) on NEAR
 
+![Cover](https://github.com/BlackBoxDotArt/MENTA-token/blob/master/hackumentacover.png)
+
 Video presentation:
 https://youtu.be/DzT15kyFBFE
 
