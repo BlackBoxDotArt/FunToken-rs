@@ -3,7 +3,7 @@
 Video presentation:
 https://youtu.be/DzT15kyFBFE
 
-Pesentation slides:  
+Pesentation slides deck: [Pesentation slides](https://github.com/BlackBoxDotArt/MENTA-token/blob/master/Hackumenta_for_Hack_the_Rainbow_%20(1).pdf)
 
 Instructions for testing the contract:
 Use the command line to call the Mint, Burn, Transfer methods 
