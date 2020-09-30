@@ -3,7 +3,7 @@
 Video presentation:
 https://youtu.be/DzT15kyFBFE
 
-Presentation slides included in the repo
+Pesentation slides:  
 
 Instructions for testing the contract:
 Use the command line to call the Mint, Burn, Transfer methods 
@@ -120,7 +120,7 @@ In this case the total amount gets decremented from the sender, and the receiver
         self.refund_storage(initial_storage);
 
 
-TODO;
+# TODO;
 
 UI: To connect the token contract with the UI provided by Aaaron Luhning and the Vital Point Guild: (https://github.com/ALuhning/VPC_FT)
 
