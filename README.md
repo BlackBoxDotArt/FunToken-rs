@@ -1,4 +1,4 @@
-# HACKUMENTA token ($MENTA)
+# HACKUMENTA token ($MENTA) on NEAR
 
 Video presentation:
 https://youtu.be/DzT15kyFBFE
