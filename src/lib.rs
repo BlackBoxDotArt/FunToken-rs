@@ -1,19 +1,25 @@
 /**
 * Mintable Fungible Token implementation with JSON serialization. 
 *
-* Based on Mintable Fungible Token for Rainbow Bridge: https://github.com/near/rainbow-bridge-rs/tree/master/mintable-fungible-token
-* This contract will implement $NMT (Near $MENTA) the token of Hackumenta - A full Art Fair organized peer to peer and funded through a token sale.
-* Every interaction with $MENTA (mint, burn, transfer) will microfund the Hackumenta Pool for the Art Fair. 
-* Proceeds are completely dedicated to fund the Fair effectively acting as an “Art Pre Sale” - or more cheekly an Initial Art Offering.
+* Based on Mintable Fungible Token for Rainbow Bridge: 
+* https://github.com/near/rainbow-bridge-rs/tree/master/mintable-fungible-token
+* This contract will implement $NMT (Near $MENTA) the token of Hackumenta - A full Art Fair 
+* organized peer to peer and funded through a token sale.
 *
-* The goal of this token is to mirror the economics of TrojanToken.sol and mirror $MENTA across the Rainbow Bridge so that participants can
-* take advantage of the lower costs and faster speeds of the Near blockchain. 
+* Every interaction with $MENTA (mint, burn, transfer) will microfund the Hackumenta Pool for 
+* the Art Fair. Proceeds are completely dedicated to fund the Fair effectively acting as an 
+* “Art Pre Sale” - or more cheekly an Initial Art Offering.
+*
+* The goal of this token is to mirror the economics of TrojanToken.sol and mirror $MENTA across 
+* the Rainbow Bridge so that participants can take advantage of the lower costs and faster speeds 
+* of the Near blockchain. 
 *
 * This Fungible Token is the foundation stone upon which real life art experiences are built.
 *
 * NOTES:
 Properties specific to Mintable Fungible Token:
-*  - It is an extension of the standard Fungible token that can be found here: https://github.com/near/near-sdk-rs/tree/master/examples/fungible-token
+*  - It is an extension of the standard Fungible token that can be found here: 
+*    https://github.com/near/near-sdk-rs/tree/master/examples/fungible-token
 *  - The total balance is not fixed, and is initially 0. When valid proof is submitted the total
 *    balance increases, when the tokens are burnt the balance decreases.
 *  - The contract permanently memorizes the hashes of the events that were used for
@@ -33,24 +39,33 @@ Properties inherited from the standard Fungible Token:
 *  - To prevent the deployed contract from being modified or deleted, it should not have any access
 *    keys on its account.
 */
-use borsh::{BorshDeserialize, BorshSerialize};
+
+use std::convert::TryInto;
+
+use borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{UnorderedMap, UnorderedSet};
 use near_sdk::json_types::U128;
+
 use near_sdk::{
     env, ext_contract, near_bindgen, AccountId, Balance, Promise, PromiseOrValue, StorageUsage,
 };
-#[cfg(test)]
-use serde::Deserialize;
+
+use uint::construct_uint;
+
+construct_uint! {
+    /// 256-bit unsigned integer.
+    pub struct U256(4);
+}
+
+
+use serde::{Deserialize, Serialize};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Price per 1 byte of storage from mainnet genesis config.
 const STORAGE_PRICE_PER_BYTE: Balance = 100000000000000000000;
-/// Price per 1 $MENTA
-const POOL_SHARE: Balance = 500000000000000000000;
-/// Hackumenta Pool Account
-const pool_account_id = hackumenta.testnet;
+
 
 
 /// Contains balance and allowances information for one account.
@@ -63,6 +78,7 @@ pub struct Account {
     /// owner.
     pub allowances: UnorderedMap<Vec<u8>, Balance>,
 }
+
 
 impl Account {
     /// Initializes a new Account with 0 balance and no allowances for a given `account_hash`.
@@ -95,9 +111,8 @@ impl Account {
 pub struct MintableFungibleToken {
     /// sha256(AccountID) -> Account details.
     pub accounts: UnorderedMap<Vec<u8>, Account>,
-
     /// Total supply of the all token.
-    pub total_supply: Balance, 
+    pub total_supply: Balance,
     /// The account of the prover that we can use to prove
     pub prover_account: AccountId,
     /// Address of the Ethereum locker contract.
@@ -229,6 +244,28 @@ impl std::fmt::Display for EthEventData {
     }
 }
 
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct PoolFraction {
+    pub numerator: u32,
+    pub denominator: u32,
+}
+
+impl PoolFraction {
+    pub fn assert_valid(&self) {
+        assert_ne!(self.denominator, 0, "Denominator must be a positive number");
+        assert!(
+            self.numerator <= self.denominator,
+            "The Pool fraction must be less or equal to 1"
+        );
+    }
+
+    pub fn multiply(&self, value: Balance) -> Balance {
+        (U256::from(self.numerator) * U256::from(value) / U256::from(self.denominator)).as_u128()
+    }
+}
+
+
 #[ext_contract(ext_fungible_token)]
 pub trait ExtFungibleToken {
     #[result_serializer(borsh)]
@@ -242,13 +279,14 @@ pub trait ExtFungibleToken {
     ) -> Promise;
 }
 
+
 #[near_bindgen]
 impl MintableFungibleToken {
     /// Initializes the contract without total supply.
     /// `prover_account`: NEAR account of the Near Prover contract;
     /// `locker_address`: Ethereum address of the locker contract, in hex.
     #[init]
-    pub fn new(prover_account: AccountId, locker_address: String) -> Self {
+    pub fn new(prover_account: AccountId, locker_address: String,) -> Self {
         let data =
             hex::decode(locker_address).expect("`locker_address` should be a valid hex string.");
         assert_eq!(data.len(), 20, "`locker_address` should be 20 bytes long");
@@ -348,13 +386,32 @@ impl MintableFungibleToken {
             env::panic(b"Not enough balance");
         }
         
-         //calculate percentage here
-         let principle: u128 = amount;
-         let numerator: u128 = 1;
-         let denominator: u128 = 100;
-         let pool_amount_transfer = numerator * principle / denominator;  
+        // calculate percentage here
+        // for small amounts expected this should be safe for now
+        // however, to go live either implement TryFrom<near_sdk::json_types::U128> 
+        // or wait for NEAR to implement maths such as:
+        // https://docs.rs/ethereum-types/0.3.2/ethereum_types/struct.U128.html
+
+
+        // Transfer Pool Share is 1%
+        let numerator: u32 = 1;
+        let denominator: u32 = 100;
+
+        // Find the fraction of tokens for transfer fee
+        // Something like this, based on: 
+        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/lib.rs#L141-L142
+
+        let pool_amount_transfer = pool_share.multiply(amount); 
+
+        // Or something like this, based on:
+        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/internal.rs#L301-L303
+        //(U256::from(numerator) * U256::from(amount)
+        //    / U256::from(denominator))
+        //.as_u128()
          
-        account.balance -= amount - pool_amount_transfer;
+
+        // Set account balance for sender
+        account.balance -= amount;
 
         // If transferring by escrow, need to check and update allowance.
         let escrow_account_id = env::predecessor_account_id();
@@ -371,8 +428,11 @@ impl MintableFungibleToken {
          
         // Deposit amount to the new owner and save the new account to the state.
         let mut new_account = self.get_account(&new_owner_id);
-        new_account.balance += amount - pool_amount_transfer;
-        self.pay_pool_mint(pool_amount_transfer); 
+        // Depositing amount less transfer fee
+        new_account.balance += amount - pool_amount_transfer as u128;
+        // Send transfer fee amount to Hackumenta Pool
+        Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_transfer);
+        // Set account state and refund unused storage deposit
         self.set_account(&new_owner_id, &new_account);
         self.refund_storage(initial_storage);
     }
@@ -497,17 +557,37 @@ impl MintableFungibleToken {
 
         let mut account = self.get_account(&new_owner_id);
         let amount: Balance = amount.into();
-        
-         //calculate percentage here
-         let principle: u128 = amount;
-         let numerator: u128 = 2;
-         let denominator: u128 = 100;
-         let pool_amount_mint = numerator * principle / denominator; 
+ 
+        // calculate percentage here
+        // for small amounts expected this should be safe for now
+        // however, to go live either implement TryFrom<near_sdk::json_types::U128> 
+        // or wait for NEAR to implement maths such as:
+        // https://docs.rs/ethereum-types/0.3.2/ethereum_types/struct.U128.html
 
+
+        // Mint Pool Share is 2%
+        let numerator: u32 = 2;
+        let denominator: u32 = 100;
+
+        // Find the fraction of tokens for transfer fee
+        // Something like this, based on: 
+        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/lib.rs#L141-L142
+
+        let pool_amount_transfer = pool_share.multiply(amount); 
+
+        // Or something like this, based on:
+        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/internal.rs#L301-L303
+        //(U256::from(numerator) * U256::from(amount)
+        //    / U256::from(denominator))
+        //.as_u128()
+         
+
+        // Set account balance to amount minted minus mint fee amount
         account.balance += amount - pool_amount_mint;
-        self.total_supply += amount - pool_amount_mint;
+        self.total_supply += amount;
+        // Set state and send mint fee amount to Hackumenta Pool and refund unused storage deposit
         self.set_account(&new_owner_id, &account);
-        self.pay_pool_mint(pool_amount_mint); 
+        Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_mint);
         self.refund_storage(initial_storage);
     }
 
@@ -519,16 +599,40 @@ impl MintableFungibleToken {
         let owner = env::predecessor_account_id();
         let mut account = self.get_account(&owner);
         assert!(account.balance >= amount.0, "Not enough balance");
+
+        // calculate percentage here
+        // for small amounts expected this should be safe for now
+        // however, to go live either implement TryFrom<near_sdk::json_types::U128> 
+        // or wait for NEAR to implement maths such as:
+        // https://docs.rs/ethereum-types/0.3.2/ethereum_types/struct.U128.html
+
+
+        // Burn Pool Share is 3%
+        let numerator: u32 = 3;
+        let denominator: u32 = 100;
+
+
+        // Find the fraction of tokens for transfer fee
+
+        // Something like this, based on: 
+        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/lib.rs#L141-L142
+
+        let pool_amount_transfer = pool_share.multiply(amount); 
+
+        // Or something like this, based on:
+        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/internal.rs#L301-L303
+        //(U256::from(numerator) * U256::from(amount)
+        //    / U256::from(denominator))
+        //.as_u128()
          
-         //calculate percentage here
-         let principle: u128 = amount;
-         let numerator: u128 = 3;
-         let denominator: u128 = 100;
-         let pool_amount_burn = numerator * principle / denominator;
-         
-        account.balance -= amount.0 - pool_burn_amount;
-        self.total_supply -= amount.0 - pool_burn_amount;
-        self.pay_pool_burn(pool_burn_amount); 
+
+        // Send burn fee amount of tokens
+        Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_burn);
+
+        // Account and supply accounting
+        account.balance -= amount.0 - pool_amount_burn;
+        self.total_supply -= amount.0;
+
         self.set_account(&owner, &account);
         let recipient = hex::decode(recipient).expect("recipient should be a hex");
         assert_eq!(
@@ -578,21 +682,6 @@ impl MintableFungibleToken {
         }
     }
      
-     fn pay_pool_mint(pool_account_id: AccountId, pool_amount_mint: U128) {
-          
-         Promise::new(pool_account_id).transfer(pool_amount_mint);
-     }
-     
-     fn pay_pool_burn(pool_account_id: AccountId, pool_amount_burn: U128) {
-
-         Promise::new(pool_account_id).transfer(pool_amount_burn);
-     }
-     
-     fn pay_pool_transfer(pool_account_id: AccountId, pool_amount_transfer: U128) {
-
-         Promise::new(pool_account_id).transfer(pool_amount_transfer);
-     }
-
     fn refund_storage(&self, initial_storage: StorageUsage) {
         let current_storage = env::storage_usage();
         let attached_deposit = env::attached_deposit();
