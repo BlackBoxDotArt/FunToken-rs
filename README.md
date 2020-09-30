@@ -47,6 +47,7 @@ The remaining funds are routed to a “liquidity pool: algorithmically guarantee
 
 Every interaction with $MENTA funds creativity and improves the experience of HACKUMENTA art fair, distributing benefits amongst a network of participating projects, and cultivating an inclusive open art economy around HACKUMENTA. 
 
+![individual-mint-burn-trojan-simulation](https://github.com/TROJANFOUNDATION/Trojan-DAO-Monetary-System/blob/master/cadCAD_simulation/mint-burn-graph.png)
 
 # Technical overview
 
