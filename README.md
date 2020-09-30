@@ -55,7 +55,7 @@ Every interaction with $MENTA funds creativity and improves the experience of HA
 
 The existing contract Mintable Fungible token https://github.com/near/rainbow-bridge-rs extends the standard fungible token specification contract, with a mintable function, as well as lockable functions providing mirroring of tokens between NEAR and Ethereum. We chose to base our token contract on this because we knew the next steps would be to use the bridge to mirror the $MENTA token between NEAR and Ethereum. 
 
-To be able to mirror the $MENTA token we needed to replicate the tokenomics that will be in place on Ethereum(link), which means implementing a percentage fees for mint, burn and transfer events. In our example we implemented a 2% Mint, 3% Burn, and 1% Transfer. This means that there is symmetry between the tokenomics on both blockchains. 
+To be able to mirror the $MENTA token we needed to replicate the tokenomics that will be in place on Ethereum, which requires implementing a percentage fees for mint, burn and transfer events. In our example we implemented a 2% Mint, 3% Burn, and 1% Transfer. This means that there is symmetry between the tokenomics on both blockchains. 
 
 In order to do this, we modified the Reward Fee Fraction functionality, in the NEAR core contract’s staking pool, to implement a multiply function, which is not yet available in the NEAR SDK:
 
