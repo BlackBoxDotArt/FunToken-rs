@@ -19,7 +19,7 @@ Sparrow: https://github.com/SLRead
 Back-end dev ; hours contributed []
 
 Felipe Duarte: https://github.com/DuarteFelipe 
-Visual communication / Presentation ; hours contributed []
+Visual communication / Website design / Presentation ; hours contributed []
 
 James Simbouras: https://github.com/jsimbouras
 Token economics / communication ; hours contributed []
