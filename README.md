@@ -13,6 +13,18 @@ Instructions for testing the contract:
 Use the command line to call the Mint, Burn, Transfer methods 
 https://docs.near.org/docs/roles/developer/contracts/test-contracts
 
+Team: 
+
+Sparrow: https://github.com/SLRead 
+Back-end dev ; hours contributed []
+
+Felipe Duarte: https://github.com/DuarteFelipe 
+Visual communication / Presentation ; hours contributed []
+
+James Simbouras: https://github.com/jsimbouras
+Token economics / communication ; hours contributed []
+
+
 # Intro 
 
 Built for the Hack the Rainbow Hackathon! 
