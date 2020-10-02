@@ -21,8 +21,12 @@ Back-end dev ; hours contributed []
 Felipe Duarte: https://github.com/DuarteFelipe 
 Visual communication / Website design / Presentation ; hours contributed []
 
+Dvid: https://github.com/dvid
+Front-end dev ; hours contributed []
+
 James Simbouras: https://github.com/jsimbouras
 Token economics / communication ; hours contributed []
+
 
 
 # Intro 
