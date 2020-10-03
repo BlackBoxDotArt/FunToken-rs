@@ -40,7 +40,6 @@ Properties inherited from the standard Fungible Token:
 *    keys on its account.
 */
 
-use std::convert::TryInto;
 
 use borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{UnorderedMap, UnorderedSet};
@@ -50,15 +49,6 @@ use near_sdk::{
     env, ext_contract, near_bindgen, AccountId, Balance, Promise, PromiseOrValue, StorageUsage,
 };
 
-use uint::construct_uint;
-
-construct_uint! {
-    /// 256-bit unsigned integer.
-    pub struct U256(4);
-}
-
-
-use serde::{Deserialize, Serialize};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -244,27 +234,6 @@ impl std::fmt::Display for EthEventData {
     }
 }
 
-#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub struct PoolFraction {
-    pub numerator: u32,
-    pub denominator: u32,
-}
-
-impl PoolFraction {
-    pub fn assert_valid(&self) {
-        assert_ne!(self.denominator, 0, "Denominator must be a positive number");
-        assert!(
-            self.numerator <= self.denominator,
-            "The Pool fraction must be less or equal to 1"
-        );
-    }
-
-    pub fn multiply(&self, value: Balance) -> Balance {
-        (U256::from(self.numerator) * U256::from(value) / U256::from(self.denominator)).as_u128()
-    }
-}
-
 
 #[ext_contract(ext_fungible_token)]
 pub trait ExtFungibleToken {
@@ -283,6 +252,7 @@ pub trait ExtFungibleToken {
 #[near_bindgen]
 impl MintableFungibleToken {
     /// Initializes the contract without total supply.
+    /// bootstrap initial supply on first deploy
     /// `prover_account`: NEAR account of the Near Prover contract;
     /// `locker_address`: Ethereum address of the locker contract, in hex.
     #[init]
@@ -295,7 +265,7 @@ impl MintableFungibleToken {
         assert!(!env::state_exists(), "Already initialized");
         Self {
             accounts: UnorderedMap::new(b"a".to_vec()),
-            total_supply: 0,
+            total_supply: 10000,
             prover_account,
             locker_address,
             used_events: UnorderedSet::new(b"u".to_vec()),
@@ -394,21 +364,13 @@ impl MintableFungibleToken {
 
 
         // Transfer Pool Share is 1%
-        let numerator: u32 = 1;
-        let denominator: u32 = 100;
+        let principle = amount;
+        let numerator = 1;
+        let denominator = 100;
 
         // Find the fraction of tokens for transfer fee
-        // Something like this, based on: 
-        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/lib.rs#L141-L142
-
-        let pool_amount_transfer = pool_share.multiply(amount); 
-
-        // Or something like this, based on:
-        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/internal.rs#L301-L303
-        //(U256::from(numerator) * U256::from(amount)
-        //    / U256::from(denominator))
-        //.as_u128()
-         
+        let pool_amount_transfer = numerator * principle / denominator;
+  
 
         // Set account balance for sender
         account.balance -= amount;
@@ -566,20 +528,12 @@ impl MintableFungibleToken {
 
 
         // Mint Pool Share is 2%
-        let numerator: u32 = 2;
-        let denominator: u32 = 100;
+        let principle = amount;
+        let numerator: u128 = 2;
+        let denominator: u128 = 100;
 
         // Find the fraction of tokens for transfer fee
-        // Something like this, based on: 
-        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/lib.rs#L141-L142
-
-        let pool_amount_transfer = pool_share.multiply(amount); 
-
-        // Or something like this, based on:
-        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/internal.rs#L301-L303
-        //(U256::from(numerator) * U256::from(amount)
-        //    / U256::from(denominator))
-        //.as_u128()
+        let pool_amount_mint = numerator * principle / denominator;
          
 
         // Set account balance to amount minted minus mint fee amount
@@ -590,6 +544,47 @@ impl MintableFungibleToken {
         Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_mint);
         self.refund_storage(initial_storage);
     }
+
+
+    /// Mint the token natively on NEAR increasing the total supply
+    #[payable]
+    pub fn native_mint(&mut self, owner_id: AccountId, amount: U128) {
+        let initial_storage = env::storage_usage();
+        let current_storage = env::storage_usage();
+        let attached_deposit = env::attached_deposit();
+        let required_deposit =
+            Balance::from(current_storage - initial_storage) * STORAGE_PRICE_PER_BYTE;
+        let _leftover_deposit = attached_deposit - required_deposit;
+
+        let mut account = self.get_account(&owner_id);
+        let amount: Balance = amount.into();
+ 
+        // calculate percentage here
+        // for small amounts expected this should be safe for now
+        // however, to go live either implement TryFrom<near_sdk::json_types::U128> 
+        // or wait for NEAR to implement maths such as:
+        // https://docs.rs/ethereum-types/0.3.2/ethereum_types/struct.U128.html
+
+
+        // Mint Pool Share is 2%
+        let principle = amount;
+        let numerator: u128 = 2;
+        let denominator: u128 = 100;
+
+        // Find the fraction of tokens for transfer fee
+        let pool_amount_mint = numerator * principle / denominator;
+         
+
+        // Set account balance to amount minted minus mint fee amount
+        account.balance += amount - pool_amount_mint;
+        self.total_supply += amount;
+        // Set state and send mint fee amount to Hackumenta Pool and refund unused storage deposit
+        self.set_account(&owner_id, &account);
+        Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_mint);
+        self.refund_storage(initial_storage);
+    }
+
+
 
     /// Burn given amount of tokens and unlock it on the Ethereum side for the recipient address.
     /// We return the amount as u128 and the address of the beneficiary as `[u8; 20]` for ease of
@@ -608,22 +603,12 @@ impl MintableFungibleToken {
 
 
         // Burn Pool Share is 3%
-        let numerator: u32 = 3;
-        let denominator: u32 = 100;
-
+        let principle = amount;
+        let numerator: u128 = 1;
+        let denominator: u128 = 100;
 
         // Find the fraction of tokens for transfer fee
-
-        // Something like this, based on: 
-        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/lib.rs#L141-L142
-
-        let pool_amount_transfer = pool_share.multiply(amount); 
-
-        // Or something like this, based on:
-        // https://github.com/near/core-contracts/blob/671c05f09abecabe7a7e58efe942550a35fc3292/staking-pool/src/internal.rs#L301-L303
-        //(U256::from(numerator) * U256::from(amount)
-        //    / U256::from(denominator))
-        //.as_u128()
+        let pool_amount_burn = numerator * principle.0 / denominator;
          
 
         // Send burn fee amount of tokens
