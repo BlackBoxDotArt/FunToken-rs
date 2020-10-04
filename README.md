@@ -29,8 +29,12 @@ Token economics / communication ; hours contributed []
 
 # Deployed Contract:
 
+# Dev Environment:
+If you want to develop on this repo...
+
 # How to test the submission:
 
+Demo  is live at weplay.games/hackumenta
 
 
 # Intro 
