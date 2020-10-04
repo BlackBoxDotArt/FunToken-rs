@@ -9,9 +9,7 @@ https://youtu.be/DzT15kyFBFE
 
 [Website](https://hackumenta.webflow.io/)
 
-Instructions for testing the contract:
-Use the command line to call the Mint, Burn, Transfer methods 
-https://docs.near.org/docs/roles/developer/contracts/test-contracts
+Live Demo: weplay.games/hackumenta
 
 Team: 
 
@@ -36,6 +34,10 @@ If you want to develop on this repo...
 # How to test the submission:
 
 Demo is live at url: weplay.games/hackumenta
+
+Instructions for testing the contract:
+Use the command line to call the Mint, Burn, Transfer methods 
+https://docs.near.org/docs/roles/developer/contracts/test-contracts
 
 
 # Intro 
