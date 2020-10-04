@@ -69,35 +69,31 @@ Every interaction with $MENTA funds creativity and improves the experience of HA
 
 * Based on: https://github.com/near/rainbow-bridge-rs/tree/master/mintable-fungible-token
 
-The existing contract Mintable Fungible token https://github.com/near/rainbow-bridge-rs extends the standard fungible token specification contract, with a mintable function, as well as lockable functions providing mirroring of tokens between NEAR and Ethereum. We chose to base our token contract on this because we knew the next steps would be to use the bridge to mirror the $MENTA token between NEAR and Ethereum. 
+The existing contract Mintable Fungible token https://github.com/near/rainbow-bridge-rs extends the standard fungible token specification contract, with a mintable function, as well as lockable functions providing for mirroring of tokens between NEAR and Ethereum. We chose to base our token contract on this because we knew the next steps would be to use the bridge to mirror the $MENTA token between NEAR and Ethereum. 
 
-To be able to mirror the $MENTA token we needed to replicate the tokenomics that will be in place on Ethereum, which requires implementing a percentage fees for mint, burn and transfer events. In our example we implemented a 2% Mint, 3% Burn, and 1% Transfer. This means that there is symmetry between the tokenomics on both blockchains. 
+To be able to mirror $MENTA token we needed to replicate the tokenomics that will be in place on Ethereum, which requires implementing a percentage fees for mint, burn and transfer events. In our example we implemented a 2% Mint, 3% Burn, and 1% Transfer. This means that there is symmetry between the tokenomics on both blockchains. 
 
-In order to do this, we modified the Reward Fee Fraction functionality, in the NEAR core contract’s staking pool, to implement a multiply function, which is not yet available in the NEAR SDK:
-
-impl RewardFeeFraction {
-    pub fn assert_valid(&self) {
-        assert_ne!(self.denominator, 0, "Denominator must be a positive number");
-        assert!(
-            self.numerator <= self.denominator,
-            "The reward fee must be less or equal to 1"
-        );
-    }
-
-    pub fn multiply(&self, value: Balance) -> Balance {
-        (U256::from(self.numerator) * U256::from(value) / U256::from(self.denominator)).as_u128()
-    }
-}
-
+In order to do this, we added calculations based on function to determine percentage fee and then deduct that (and transfer it to the 'hackumenta.testnet' Pool account, before finalising the account balances on every Mint, Burn and Transfer call.
 
 
 Minting $MENTA
 
 In the Mint scenario, the fraction fee (2%) is calculated. The account that did the minting gets credited with the amount minus the fee. The fee is sent to Hackumenta.testnet pool. 
 
-account.balance += amount - pool_amount_mint;
-        self.total_supply += amount - pool_amount_mint;
-        self.set_account(&new_owner_id, &account);
+        // Mint Pool Share is 2%
+        let principle = amount;
+        let numerator: u128 = 2;
+        let denominator: u128 = 100;
+
+        // Find the fraction of tokens for transfer fee
+        let pool_amount_mint = numerator * principle / denominator;
+         
+
+        // Set account balance to amount minted minus mint fee amount
+        account.balance += amount - pool_amount_mint;
+        self.total_supply += amount;
+        // Set state and send mint fee amount to Hackumenta Pool and refund unused storage deposit
+        self.set_account(&owner_id, &account);
         Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_mint);
         self.refund_storage(initial_storage);
         
@@ -106,38 +102,51 @@ Burning $MENTA
 
 Burn is the reverse of that (3% fee). 3 % of the total tokens to burn are sent automatically to  the pool. We decrement the account balance of the “burner”. For tokens burned on NEAR , only equivalent the token amount minus the burn fee are unlocked on the Ethereum side. 
 
-// Deposit amount to the new owner and save the new account to the state.
-        let mut new_account = self.get_account(&new_owner_id);
-        new_account.balance += amount - pool_amount_transfer;
-        self.pay_pool_mint(pool_amount_transfer); 
-        self.set_account(&new_owner_id, &new_account);
-        self.refund_storage(initial_storage);
-account.balance -= amount.0 - pool_burn_amount;
-        self.total_supply -= amount.0 - pool_burn_amount;
-        self.pay_pool_burn(pool_burn_amount); 
-        self.set_account(&owner, &account);
-        let recipient = hex::decode(recipient).expect("recipient should be a hex");
-        assert_eq!(
-            recipient.len(),
-            20,
-            "Recipient should be a 20-bytes long address"
-        );
-        let mut raw_recipient = [0u8; 20];
-        raw_recipient.copy_from_slice(&recipient);
-        (amount, raw_recipient)
+
+        // Burn Pool Share is 3%
+        let principle = amount;
+        let numerator: u128 = 1;
+        let denominator: u128 = 100;
+
+        // Find the fraction of tokens for transfer fee
+        let pool_amount_burn = numerator * principle.0 / denominator;
+         
+
+        // Send burn fee amount of tokens
+        Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_burn);
+
+        // Account and supply accounting
+        account.balance -= amount.0 - pool_amount_burn;
+        self.total_supply -= amount.0;
 
 
 Transferring $MENTA
 
 In this case the total amount gets decremented from the sender, and the receiver gets the amount transferred minus the 1 % transfer fee, which is again routed to the pool. 
 
-// Deposit amount to the new owner and save the new account to the state.
-        let mut new_account = self.get_account(&new_owner_id);
-        new_account.balance += amount - pool_amount_transfer;
-        self.pay_pool_mint(pool_amount_transfer); 
-        self.set_account(&new_owner_id, &new_account);
-        self.refund_storage(initial_storage);
+        // Transfer Pool Share is 1%
+        let principle = amount;
+        let numerator = 1;
+        let denominator = 100;
 
+        // Find the fraction of tokens for transfer fee
+        let pool_amount_transfer = numerator * principle / denominator;
+  
+
+        // Set account balance for sender
+        account.balance -= amount;
+
+        // Saving the account back to the state.
+        self.set_account(&owner_id, &account);
+         
+        // Deposit amount to the new owner and save the new account to the state.
+        let mut new_account = self.get_account(&new_owner_id);
+        // Depositing amount less transfer fee
+        new_account.balance += amount - pool_amount_transfer as u128;
+        // Send transfer fee amount to Hackumenta Pool
+        Promise::new("hackumenta.testnet".to_string()).transfer(pool_amount_transfer);
+        // Set account state and refund unused storage deposit
+        self.set_account(&new_owner_id, &new_account);
 
 # TODO;
 
