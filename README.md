@@ -14,16 +14,16 @@ Live Demo: weplay.games/hackumenta
 Team: 
 
 Sparrow: https://github.com/SLRead 
-Back-end dev ; hours contributed []
+Back-end dev ; 
 
 Felipe Duarte: https://github.com/DuarteFelipe 
-Visual communication / Website design / Presentation ; hours contributed []
+Visual communication / Website design / Presentation ; 
 
 Dvid: https://github.com/dvid
-Front-end dev ; hours contributed []
+Front-end dev ; 
 
 James Simbouras: https://github.com/jsimbouras
-Token economics / communication ; hours contributed []
+Token economics / communication ; 
 
 # Deployed Contract:
  https://explorer.testnet.near.org/accounts/menta.testnet
