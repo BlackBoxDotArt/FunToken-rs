@@ -27,6 +27,10 @@ Front-end dev ; hours contributed []
 James Simbouras: https://github.com/jsimbouras
 Token economics / communication ; hours contributed []
 
+# Deployed Contract:
+
+# How to test the submission:
+
 
 
 # Intro 
@@ -149,8 +153,6 @@ In this case the total amount gets decremented from the sender, and the receiver
         self.set_account(&new_owner_id, &new_account);
 
 # TODO;
-
-UI: To connect the token contract with the UI provided by Aaaron Luhning and the Vital Point Guild: (https://github.com/ALuhning/VPC_FT)
 
 Enabling the Rainbow Bridge functionality:
 Enabling the relays between the NEAR clent and the Ethereum clients on the respective networks.  
