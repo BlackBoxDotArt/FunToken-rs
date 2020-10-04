@@ -25,7 +25,7 @@ Dvid: https://github.com/dvid
 Front-end dev ; 
 
 James Simbouras: https://github.com/jsimbouras
-Token economics / communication ; 
+Token economics / communication ; approx. 5 hours
 
 # Deployed Contract:
  https://explorer.testnet.near.org/accounts/menta.testnet
