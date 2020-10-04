@@ -29,7 +29,7 @@ Token economics / communication ; hours contributed []
  https://explorer.testnet.near.org/accounts/menta.testnet
  
 # Dev Environment:
-If you want to develop on this repo...
+NODE_ENV=testnet
 
 # How to test the submission:
 
