@@ -16,7 +16,7 @@ Live Demo: weplay.games/hackumenta
 Team: 
 
 Sparrow: https://github.com/SLRead 
-Back-end dev ; 
+Back-end dev ; 12 hours
 
 Felipe Duarte: https://github.com/DuarteFelipe 
 Visual communication / Website design / Presentation ; 
