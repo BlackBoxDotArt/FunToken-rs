@@ -5,7 +5,7 @@
 Video presentation:
 https://youtu.be/DzT15kyFBFE
 
-Long audio presentation, entry for Vision of a new reality! hackathon track : https://www.udrop.com/13yH/Hack_the_Rainbow_Hackumenta_audio_long_version_(1).mp3
+Long audio presentation, entry for "Vision of a new reality!" hackathon track : https://www.udrop.com/13yH/Hack_the_Rainbow_Hackumenta_audio_long_version_(1).mp3
 
 [Pesentation slides](https://github.com/BlackBoxDotArt/MENTA-token/blob/master/Hackumenta_for_Hack_the_Rainbow_%20(1).pdf)
 
