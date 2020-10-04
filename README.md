@@ -28,13 +28,14 @@ James Simbouras: https://github.com/jsimbouras
 Token economics / communication ; hours contributed []
 
 # Deployed Contract:
-
+ https://explorer.testnet.near.org/accounts/menta.testnet
+ 
 # Dev Environment:
 If you want to develop on this repo...
 
 # How to test the submission:
 
-Demo  is live at weplay.games/hackumenta
+Demo is live at url: weplay.games/hackumenta
 
 
 # Intro 
