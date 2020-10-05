@@ -22,7 +22,7 @@ Felipe Duarte: https://github.com/DuarteFelipe
 Visual communication / Website design / Presentation ; 
 
 Dvid: https://github.com/dvid
-Front-end dev ; 3 hours
+Front-end dev ; 9 hours
 
 James Simbouras: https://github.com/jsimbouras
 Token economics / communication ; approx. 6 hours
