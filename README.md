@@ -35,7 +35,7 @@ NODE_ENV=testnet
 
 # How to test the submission:
 
-Demo is live at url: weplay.games/hackumenta
+Demo is live at url: http://weplay.games/hackumenta/
 
 Instructions for testing the contract:
 Use the command line to call the Mint, Burn, Transfer methods 
